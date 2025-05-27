@@ -1,0 +1,28 @@
+{
+  "name": "@moypp/ui",
+  "description": "",
+  "license": "MIT",
+  "version": "0.0.0",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/moypp/ui.git"
+  },
+  "keywords": [
+    "react",
+    "ui",
+    "components"
+  ],
+  "author": {
+    "name": "moypp",
+    "email": "ouob77@kakao.com",
+    "url": "https://github.com/moypp"
+  },
+  "bugs": {
+    "url": "https://github.com/moypp/ui/issues"
+  },
+  "homepage": "https://github.com/moypp/ui#readme"
+}
