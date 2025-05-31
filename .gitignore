@@ -4,3 +4,8 @@
 # Dependencies & Build
 node_modules/
 dist/
+
+# Storybook
+*storybook.log
+storybook-static
+storybook-example/
