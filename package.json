@@ -10,6 +10,7 @@
     "build:js": "rollup -c",
     "build:types": "tsc --emitDeclarationOnly --project tsconfig.json",
     "build": "npm run build:js && npm run build:types",
+    "test": "jest",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,scss,md}\""
