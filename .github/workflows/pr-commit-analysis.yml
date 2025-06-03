@@ -1,0 +1,142 @@
+name: PR 커밋 로그 분석
+
+on:
+  pull_request:
+    types: [opened, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  analyze_pr_log:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 이모지 분석 및 댓글 작성
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const emojiGroups = {
+              'Features': {
+                title: '✨ 새로운 기능 (Features)',
+                emojis: ['✨', '👔']
+              },
+              'BugFixes': {
+                title: '🐛 버그 수정 (Bug Fixes)',
+                emojis: ['🐛', '🩹', '🚨', '🚑️']
+              },
+              'Refactoring': {
+                title: '♻️ 코드 리팩토링 (Refactoring)',
+                emojis: ['♻️', '🧹', '🚸']
+              },
+              'Documentation': {
+                title: '📝 문서 작성 (Documentation)',
+                emojis: ['📝', '💡', '✅', '📄']
+              },
+              'Performance': {
+                title: '🚀 성능 개선 (Performance)',
+                emojis: ['🚀', '⚡️']
+              },
+              'DependenciesBuild': {
+                title: '📦 의존성/빌드 변경 (Dependencies/Build)',
+                emojis: ['📦', '⬆️', '⬇️', '➕', '➖']
+              },
+              'UIUX': {
+                title: '💄 UI/UX 변경 (UI/UX Changes)',
+                emojis: ['💄', '💫', '📱']
+              },
+              'FileChanges': {
+                title: '🚚 파일 변경 (File Changes)',
+                emojis: ['🚚', '🔥', '⚰️', '🗑️', '✏️', '🎨']
+              },
+              'FileChanges': {
+                title: '🔧 설정 (Setting)',
+                emojis: ['🔧', '🔨', '👷', '💚', '🍱', '🏷️', '📈', ]
+              },
+              'Other': {
+                title: '💭 기타 변경사항 (Other Changes)',
+                emojis: []
+              }
+            };
+
+            const { data: commits } = await github.rest.pulls.listCommits({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              per_page: 100
+            });
+
+            let commentBody = "## 📚 작업 내역 정리\n\n";
+
+            if (!commits || commits.length === 0) {
+                commentBody += "이 PR에는 커밋 로그가 없습니다.";
+            } else {
+                const repoOwner = context.repo.owner;
+                const repoName = context.repo.repo;
+                const parsedCommits = commits
+                    .map(commit => ({
+                      message: commit.commit.message.split('\n')[0].trim(),
+                      date: new Date(commit.commit.author.date).toLocaleDateString('ko-KR'),
+                      sha: commit.sha,
+                      shortSha: commit.sha.substring(0, 7)
+                    }))
+                    .filter(({message}) => message !== '');
+
+                const groupedCommits = {};
+                for (const groupKey in emojiGroups) {
+                    groupedCommits[groupKey] = [];
+                }
+
+                const emojiRegex = /(\u00a9|\u00ae|[\u2000-\u3300]|\ud83c[\ud000-\udfff]|\ud83d[\ud000-\udfff]|\ud83e[\ud000-\udfff]?)/g;
+
+                parsedCommits.forEach(item => {
+                    const log = item.message;
+                    const matches = log.match(emojiRegex);
+                    let foundEmoji = null;
+
+                    if (matches && matches.length > 0) {
+                        foundEmoji = matches[0];
+                    }
+
+                    let assignedToGroup = false;
+                    for (const groupKey in emojiGroups) {
+                        if (emojiGroups[groupKey].emojis.includes(foundEmoji)) {
+                            groupedCommits[groupKey].push({
+                                displayMessage: log,
+                                date: item.date,
+                                sha: item.sha,
+                                shortSha: item.shortSha
+                            });
+                            assignedToGroup = true;
+                            break;
+                        }
+                    }
+
+                    if (!assignedToGroup) {
+                        groupedCommits['Other'].push({
+                            displayMessage: log,
+                            date: item.date,
+                            sha: item.sha,
+                            shortSha: item.shortSha
+                        });
+                    }
+                });
+
+                for (const groupKey in emojiGroups) {
+                    if (groupedCommits[groupKey].length > 0) {
+                        commentBody += `### ${emojiGroups[groupKey].title}\n`;
+                        groupedCommits[groupKey].forEach(commitItem => {
+                            const commitUrl = `https://github.com/${repoOwner}/${repoName}/commit/${commitItem.sha}`;
+                            commentBody += `- ${commitItem.displayMessage} (${commitItem.date} / [${commitItem.shortSha}](${commitUrl}))\n`;
+                        });
+                        commentBody += '\n';
+                    }
+                }
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });

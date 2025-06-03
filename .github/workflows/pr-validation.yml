@@ -1,0 +1,85 @@
+name: PR 유효성 검사
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+
+jobs:
+  validate_pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔧 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: 🔧 Node.js 환경 설정
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦️ 패키지 설치
+        run: npm install
+
+      - name: ▶️ 테스트코드 실행
+        id: run_tests
+        run: npm test
+        continue-on-error: true
+
+      - name: ▶️ 린트 실행
+        id: run_lint
+        run: npm run lint
+        continue-on-error: true
+
+      - name: ▶️ 프로젝트 빌드
+        id: build_project
+        run: npm run build
+        continue-on-error: true
+
+      - name: 💬 유효성 검사 결과 댓글 추가
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const testOutcome = "${{ steps.run_tests.outcome }}";
+            const lintOutcome = "${{ steps.run_lint.outcome }}";
+            const buildOutcome = "${{ steps.build_project.outcome }}";
+            const isTestFailed = (testOutcome === 'failure');
+            const isLintFailed = (lintOutcome === 'failure');
+            const isBuildFailed = (buildOutcome === 'failure');
+            const allPassed = !isTestFailed && !isLintFailed && !isBuildFailed;
+            const checkIsFailed = (isFailed) => isFailed ? '🔴 FAIL' : '🟢 SUCCESS';
+            const comment = [
+              `| ✅ TEST | 🧹 LINT | 🛠️ BUILD |`,
+              `| :--: | :--: | :--: |`,
+              `| ${checkIsFailed(isTestFailed)} | ${checkIsFailed(isLintFailed)} | ${checkIsFailed(isBuildFailed)} |`
+            ];
+            const result = allPassed  ? '✨ 모든 유효성 검사를 성공적으로 통과했습니다! ✨' : '🚨 하나 이상의 유효성 검사가 실패하여 PR을 병합할 수 없습니다. 실패한 항목을 확인하고 수정해주세요.';
+
+            core.exportVariable('ALL_PASSED', allPassed ? 'true' : 'false');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ✔️ 유효성 검사 결과\n\n${comment.join('\n')}\n\n${result}`
+            });
+
+      - name: ✅ 모두 통과한 경우 PR 승인
+        if: env.ALL_PASSED == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.pulls.createReview({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              event: 'APPROVE'
+            });
+
+      - name: ❌ 실패 시 Job 실패 처리
+        if: env.ALL_PASSED == 'false'
+        run: |
+          echo "🚨 하나 이상의 유효성 검사가 실패하여 PR을 병합할 수 없습니다."
+          exit 1
