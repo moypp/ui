@@ -1,0 +1,127 @@
+name: 오래된 작업 브랜치 삭제
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # KST 00:00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  delete_stale_branches:
+    runs-on: ubuntu-latest
+
+    env:
+      STALE_BRANCH_DAYS: 7
+
+    steps:
+      - name: ⚙️ 환경 변수 확인
+        run: |
+          echo "STALE_BRANCH_DAYS: ${{ env.STALE_BRANCH_DAYS }}일"
+
+      - name: 🔍 오래된 작업 브랜치 찾기 및 삭제
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const staleDays = parseInt(process.env.STALE_BRANCH_DAYS, 10);
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - staleDays);
+
+            console.log(`Checking for branches with no new commits since: ${cutoffDate.toISOString()}`);
+
+            let branchesToDelete = [];
+
+            // 1. 모든 브랜치 목록 가져오기 (repos.listBranches 사용)
+            const { data: allBranches } = await github.rest.repos.listBranches({
+              owner,
+              repo,
+              protected: false,
+              per_page: 100
+            });
+
+            // 2. 보호된 브랜치 목록 가져오기
+            let protectedBranches = [];
+            try {
+              const { data: protectionRules } = await github.rest.repos.listBranchesProtection({ owner, repo });
+              protectedBranches = protectionRules.map(rule => rule.name);
+              console.log('Protected branches (from rules):', protectedBranches.join(', '));
+            } catch (error) {
+              console.warn('Could not list protected branches (possibly due to insufficient permissions or no protection rules). Proceeding without explicit protected branch check.');
+            }
+
+            // 저장소의 기본 브랜치도 protectedBranches에 추가하여 삭제 방지
+            const { data: repoInfo } = await github.rest.repos.get({
+              owner,
+              repo,
+            });
+            if (!protectedBranches.includes(repoInfo.default_branch)) {
+              protectedBranches.push(repoInfo.default_branch);
+              console.log('Final branches to protect:', protectedBranches.join(', '));
+            }
+
+
+            for (const branch of allBranches) {
+              const branchName = branch.name;
+
+              // 이미 보호된 브랜치 목록에 있거나 기본 브랜치이면 건너뛰기
+              if (protectedBranches.includes(branchName)) {
+                console.log(`Skipping default/protected branch: ${branchName}`);
+                continue;
+              }
+
+              let latestCommitDate;
+              try {
+                // 마지막 커밋 날짜를 확인하기 위해 Head 커밋 가져오기
+                const { data: commitDetails } = await github.rest.repos.getCommit({
+                  owner,
+                  repo,
+                  ref: branch.commit.sha,
+                });
+
+                latestCommitDate = new Date(commitDetails.commit.committer.date);
+                console.log(`Branch: ${branchName}, Latest commit date: ${latestCommitDate.toISOString()}`);
+              } catch (error) {
+                console.error(`Could not get latest commit details for branch ${branchName} (SHA: ${branch.commit.sha}):`, error);
+                continue; // 오류 발생 시 다음 브랜치로 넘어감
+              }
+
+              // PR이 열려있는지 확인
+              const { data: openPullRequests } = await github.rest.pulls.list({
+                owner,
+                repo,
+                state: 'open',
+                head: `${owner}:${branchName}`
+              });
+
+              if (openPullRequests.length > 0) {
+                console.log(`Skipping branch '${branchName}' because it has an open PR ${openPullRequests[0].number}.`);
+                continue;
+              }
+
+              if (latestCommitDate < cutoffDate) {
+                branchesToDelete.push(branchName);
+                console.log(`Candidate for deletion (stale): ${branchName}`);
+              }
+            }
+
+            if (branchesToDelete.length > 0) {
+              console.log(`Found ${branchesToDelete.length} stale branches to delete: ${branchesToDelete.join(', ')}`);
+              for (const branchName of branchesToDelete) {
+                try {
+                  await github.rest.git.deleteRef({
+                    owner,
+                    repo,
+                    ref: `heads/${branchName}`,
+                  });
+                  console.log(`Successfully deleted stale branch: ${branchName}`);
+                } catch (error) {
+                  console.error(`Failed to delete branch '${branchName}':`, error);
+                }
+              }
+            } else {
+              console.log('No stale branches found to delete.');
+            }
