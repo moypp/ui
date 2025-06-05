@@ -1,0 +1,35 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
+
+:root {
+  font-size: 14px;
+  font-family: 'Pretendard Variable', sans-serif;
+  font-weight: var(--font-weight-normal);
+
+  /* Colors */
+  --background: var(--color-neutral-50);
+  --foreground: var(--color-neutral-950);
+  --point-bg: var(--color-point-50);
+
+  --main: var(--color-point-600);
+  --main-dark: var(--color-point-700);
+  --sub: var(--color-point-200);
+  --sub-dark: var(--color-point-300);
+
+  --success: var(--color-lime-500);
+  --error: var(--color-red-500);
+  --info: var(--color-sky-500);
+  --disabled: var(--color-neutral-500);
+
+  --border-default: var(--color-neutral-300);
+}
+
+.dark {
+  --background: var(--color-neutral-950);
+  --foreground: var(--color-neutral-50);
+  --point-bg: var(--color-point-950);
+
+  --success: var(--color-lime-400);
+  --error: var(--color-red-400);
+  --info: var(--color-sky-400);
+  --disabled: var(--color-neutral-400);
+}

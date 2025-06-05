@@ -1,5 +1,6 @@
 import { Preview } from '@storybook/react-webpack5';
 import '@/styles/tailwind.css';
+import './styles.css';
 
 const preview: Preview = {
   parameters: {
