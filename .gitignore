@@ -9,3 +9,7 @@ dist/
 *storybook.log
 storybook-static
 storybook-example/
+
+# Env
+.env
+.env.*
