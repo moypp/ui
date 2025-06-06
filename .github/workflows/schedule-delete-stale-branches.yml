@@ -35,7 +35,7 @@ jobs:
 
             let branchesToDelete = [];
 
-            // 1. 모든 브랜치 목록 가져오기 (repos.listBranches 사용)
+            // 모든 브랜치 목록 가져오기 (repos.listBranches 사용)
             const { data: allBranches } = await github.rest.repos.listBranches({
               owner,
               repo,
@@ -43,35 +43,8 @@ jobs:
               per_page: 100
             });
 
-            // 2. 보호된 브랜치 목록 가져오기
-            let protectedBranches = [];
-            try {
-              const { data: protectionRules } = await github.rest.repos.listBranchesProtection({ owner, repo });
-              protectedBranches = protectionRules.map(rule => rule.name);
-              console.log('Protected branches (from rules):', protectedBranches.join(', '));
-            } catch (error) {
-              console.warn('Could not list protected branches (possibly due to insufficient permissions or no protection rules). Proceeding without explicit protected branch check.');
-            }
-
-            // 저장소의 기본 브랜치도 protectedBranches에 추가하여 삭제 방지
-            const { data: repoInfo } = await github.rest.repos.get({
-              owner,
-              repo,
-            });
-            if (!protectedBranches.includes(repoInfo.default_branch)) {
-              protectedBranches.push(repoInfo.default_branch);
-              console.log('Final branches to protect:', protectedBranches.join(', '));
-            }
-
-
             for (const branch of allBranches) {
               const branchName = branch.name;
-
-              // 이미 보호된 브랜치 목록에 있거나 기본 브랜치이면 건너뛰기
-              if (protectedBranches.includes(branchName)) {
-                console.log(`Skipping default/protected branch: ${branchName}`);
-                continue;
-              }
 
               let latestCommitDate;
               try {
