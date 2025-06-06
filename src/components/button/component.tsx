@@ -59,7 +59,7 @@ export const Button = ({
         console.warn('asChild 사용 시 disabled는 aria-disabled로 처리됩니다.');
       }
     }
-  }, [asChild, onClick]);
+  }, [asChild, onClick, type, disabled]);
 
   return (
     <Component
