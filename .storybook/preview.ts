@@ -3,6 +3,7 @@ import '@/styles/tailwind.css';
 import './styles.css';
 
 const preview: Preview = {
+  tags: ['autodocs', process.env.NODE_ENV === 'development' ? 'dev' : '!dev'],
   parameters: {
     controls: {
       matchers: {
