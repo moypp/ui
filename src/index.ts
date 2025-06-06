@@ -1,1 +1,1 @@
-console.log('@moypp/ui');
+export * from './components';

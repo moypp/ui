@@ -69,6 +69,10 @@ const config: StorybookConfig = {
 
     return config;
   },
+  env: (config) => ({
+    ...config,
+    NODE_ENV: '',
+  }),
 };
 
 export default config;
