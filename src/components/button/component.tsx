@@ -73,11 +73,11 @@ export const Button = ({
         size === 'md' && 'px-4 py-2 text-base has-[svg]:px-2!',
         size === 'sm' && 'px-3 py-1.5 text-sm has-[svg]:px-1.5!',
         // variants
-        variant === 'primary' && 'bg-main hover:bg-main-dark text-white',
-        variant === 'secondary' && 'bg-sub hover:bg-sub-dark text-black',
-        variant === 'ghost' && 'hover:bg-main/20 text-foreground bg-transparent',
+        variant === 'primary' && 'bg-primary hover:bg-primary-dark text-white',
+        variant === 'secondary' && 'bg-secondary hover:bg-secondary-dark text-black',
+        variant === 'ghost' && 'hover:bg-primary/20 text-foreground bg-transparent',
         variant === 'outline' &&
-          'inset-ring-main-dark hover:bg-main/20 text-foreground bg-transparent inset-ring-1',
+          'inset-ring-primary-dark hover:bg-primary/20 text-foreground bg-transparent inset-ring-1',
         className,
       )}
       onClick={handleClick}
