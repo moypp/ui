@@ -25,3 +25,20 @@
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
 }
+
+.scrollbar {
+  &::-webkit-scrollbar {
+    width: calc(var(--spacing) * 1.5);
+  }
+  &::-webkit-scrollbar-thumb {
+    border-radius: calc(infinity * 1px);
+    background-color: transparent;
+  }
+
+  &:hover,
+  &:focus {
+    &::-webkit-scrollbar-thumb {
+      background-color: var(--color-primary);
+    }
+  }
+}
