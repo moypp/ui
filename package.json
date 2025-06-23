@@ -61,6 +61,7 @@
     "@types/react": "^19.1.6",
     "@types/react-dom": "^19.1.5",
     "css-loader": "^7.1.2",
+    "dotenv": "^16.5.0",
     "eslint": "^9.28.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.1",
@@ -83,7 +84,9 @@
     "tailwindcss": "^4.1.8",
     "ts-jest": "^29.3.4",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.33.0",
-    "dotenv": "^16.5.0"
+    "typescript-eslint": "^8.33.0"
+  },
+  "dependencies": {
+    "lucide-react": "^0.522.0"
   }
 }
