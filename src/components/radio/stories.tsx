@@ -15,13 +15,13 @@ const meta: Meta<typeof Radio> = {
   args: {
     defaultValue: 'tomato',
     children: [
-      <Radio.Option id="tomato" value="tomato">
+      <Radio.Option key="tomato" id="tomato" value="tomato">
         토마토
       </Radio.Option>,
-      <Radio.Option id="potato" value="potato">
+      <Radio.Option key="potato" id="potato" value="potato">
         감자
       </Radio.Option>,
-      <Radio.Option id="sweetpotato" value="sweetpotato">
+      <Radio.Option key="sweetpotato" id="sweetpotato" value="sweetpotato">
         고구마
       </Radio.Option>,
     ],
